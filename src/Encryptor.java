@@ -1,3 +1,4 @@
+
 public class Encryptor {
     /** A two-dimensional array of single-character strings, instantiated in the constructor */
     private String[][] letterBlock;
@@ -13,7 +14,6 @@ public class Encryptor {
         letterBlock = new String[r][c];
         numRows = r;
         numCols = c;
-        characterShift = cS;
     }
 
     public String[][] getLetterBlock() {
@@ -35,11 +35,28 @@ public class Encryptor {
         return output.toString();
     }
 
-    public  static String[][] shiftRow(String[][] input, int shift) {
-        if (shift>=input.length) {
-            shift = input.length%shift;
+
+    public static String[][] shiftRow(String[][] array, int shift) {
+        String[][] result = new String[array.length][array[0].length];
+
+        for (int i = 0; i < array.length; i++) {
+            int newIndex = (i + shift) % array.length;
+            result[newIndex] = array[i];
         }
+
+        return result;
     }
+
+    public static String[][] shiftColumn(String[][] array, int shift) {
+        String[][] result = new String[array.length][array[0].length];
+        for (int i = 0; i<array.length; i++) {
+            for (int j = 0; j < array[i].length; j++) {
+                result[i][((j + shift) % array[i].length)] = array[i][j];
+            }
+        }
+        return result;
+    }
+
     public void fillBlock(String str) {
         int currentIdx = 0;
         for (int i = 0; i<numRows; i++) {
@@ -54,7 +71,15 @@ public class Encryptor {
         }
     }
 
-
+    public String unFillBlock(String[][] array) {
+        String wrd = "";
+        for (int i = 0; i<array.length; i++) {
+            for (int j = 0; j< array[i].length; j++) {
+                wrd += array[i][j];
+            }
+        }
+        return wrd;
+    }
 
     public String encryptBlock() {
         String str = "";
@@ -66,14 +91,110 @@ public class Encryptor {
         return str;
     }
 
-    public String superEncryptMessage(String message, int characterShift) {
-        message = shiftString(message, characterShift);
-        return encryptMessage(message);
+    public static String removeA(String message) {
+        while (message.endsWith("A")) {
+            message=message.substring(0, message.length()-1);
+        }
+        return message;
     }
 
-    public String superDecryptMessage(String message, int characterShift) {
+    public String superEncryptMessage(String message, int characterShift, int rowShift, int colShift) {
+        String finalMessage = "";
+
         message = shiftString(message, characterShift);
-        return decryptMessage(message);
+
+
+        int chunk = numCols*numRows;
+        int end = chunk;
+        int start = 0;
+        String str = "";
+        while (message.length()>=end-1) {
+            String part = message.substring(start, end);
+            start = end;
+            end+=chunk;
+            fillBlock(part);
+
+            String[][] rs = shiftRow(letterBlock, rowShift);
+            String[][] cs = shiftColumn(rs, colShift);
+            finalMessage +=  unFillBlock(cs);
+
+
+        }
+
+        if ((message.length()%chunk) != 0) {
+            String part = message.substring(start, message.length());
+            fillBlock(part);
+
+            String[][] rs = shiftRow(letterBlock, rowShift);
+            String[][] cs = shiftColumn(rs, colShift);
+            finalMessage +=  unFillBlock(cs);
+
+
+        }
+
+//        message = shiftString(message, characterShift);
+//        fillBlock(message);
+//        String[][] rs = shiftRow(letterBlock, rowShift);
+//        String[][] cs = shiftColumn(rs, colShift);
+//        message = unFillBlock(cs);
+//
+        return encryptMessage(finalMessage);
+    }
+
+    public String superDecryptMessage(String message, int characterShift, int rowShift, int colShift) {
+        String finalMessage = "";
+        message =  decryptMessage(message);
+
+
+        int chunk = numCols*numRows;
+        int end = chunk;
+        int start = 0;
+        String str = "";
+        while (message.length()>=end-1) {
+            String part = message.substring(start, end);
+            start = end;
+            end+=chunk;
+            fillBlock(part);
+
+            int reverseShiftC = letterBlock[0].length - (colShift % letterBlock[0].length);
+            String[][] uncs = shiftColumn(letterBlock, reverseShiftC);
+            int reverseShiftR = uncs.length - (rowShift % uncs.length);
+            String[][] unrs = shiftRow(uncs, reverseShiftR);
+            finalMessage += unFillBlock(unrs);
+
+
+
+        }
+
+        if ((message.length()%chunk) != 0) {
+            String part = message.substring(start, message.length());
+            fillBlock(part);
+
+            int reverseShiftC = letterBlock[0].length - (colShift % letterBlock[0].length);
+            String[][] uncs = shiftColumn(letterBlock, reverseShiftC);
+            int reverseShiftR = uncs.length - (rowShift % uncs.length);
+            String[][] unrs = shiftRow(uncs, reverseShiftR);
+            finalMessage += unFillBlock(unrs);
+
+
+        }
+        finalMessage = removeA(finalMessage);
+        finalMessage = shiftString(finalMessage, -characterShift);
+        return finalMessage;
+
+//        message =  decryptMessage(message);
+//        fillBlock(message); //re adds A
+//        int reverseShiftC = letterBlock[0].length - (colShift % letterBlock[0].length);
+//        String[][] uncs = shiftColumn(letterBlock, reverseShiftC);
+//        int reverseShiftR = uncs.length - (rowShift % uncs.length);
+//        String[][] unrs = shiftRow(uncs, reverseShiftR);
+//        message = unFillBlock(unrs);
+//
+//        message = removeA(message);
+//
+//        message = shiftString(message, -characterShift);
+//        return message;
+
     }
 
     public String encryptMessage(String message) {
@@ -108,10 +229,7 @@ public class Encryptor {
         int x = 0;
 
         for (int i = 0; i<encryptedMessage.length(); i++) {
-//            if ((i%numRows)!=0) {
-//                block[x] += encryptedMessage.substring(i, i + 1);
-//                x++;
-//            }
+
             if (block[x]!=null) {
                 block[x] += encryptedMessage.substring(i, i + 1);
             } else {
@@ -121,13 +239,10 @@ public class Encryptor {
             if (((i+1)%numRows)==0) {
                 x++;
             }
-//            block[x] = encryptedMessage.substring(i, i+1);
         }
-
 
         int count=0;
         String wrd = "";
-
         String[] smallBlock = new String[numCols];
         for (int z = 0; z<block.length; z++) {
 //            System.out.print(block[i]+"|");
@@ -139,16 +254,11 @@ public class Encryptor {
                         wrd += (smallBlock[j].substring(i, i + 1));
                     }
                 }
-
                 count = 0;
             }
-
         }
 
-
-        while (wrd.endsWith("A")) {
-            wrd=wrd.substring(0, wrd.length()-1);
-        }
+        wrd = removeA(wrd);
 
         return wrd;
     }

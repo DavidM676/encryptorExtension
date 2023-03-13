@@ -1,4 +1,3 @@
-import java.sql.SQLOutput;
 import java.util.Arrays;
 
 public class EncryptorTester {
@@ -243,6 +242,24 @@ public class EncryptorTester {
           System.out.println("  ACTUAL: " + actualDecrypted6);
         }
     */
+        Encryptor e = new Encryptor(3, 5);
+        String ok = e.superEncryptMessage("If the input is longer than 15 characters, the program will only use the first 15 characters of the input as the encryption key, and will not encrypt the remaining characters.\n" +
+                "\n" +
+                "To fix this, you can increase the maximum length of the encryption key by changing the limit in the input function and updating the range function in the encrypt function accordingly. For example, you could change the limit to 30 characters:", 2, 88, 1);
+        System.out.println(ok);
+        System.out.println(e.superDecryptMessage(ok, 2, 88, 1));
+
+
+//        System.out.println(Encryptor.shiftString("hello", 1));
+//        System.out.println(Encryptor.shiftString("ifmmp", -1));
+//        e.fillBlock("Meet at noon");
+//        print2DArray(e.getLetterBlock());
+//        System.out.println();
+//        print2DArray(Encryptor.shiftRow(e.getLetterBlock(), 1));
+//        System.out.println();
+//        print2DArray(Encryptor.shiftRow(e.getLetterBlock(), 2));
+//        System.out.println();
+//        print2DArray(Encryptor.shiftColumn(e.getLetterBlock(), 2));
     }
 
     public static void print2DArray(String[][] arr) {
@@ -254,14 +271,7 @@ public class EncryptorTester {
         }
     }
 
-    private static void printArr(String[][] arr) {
-        for (int i = 0; i<arr.length; i++) {
-            for (int j = 0; j<arr[i].length; j++) {
-                System.out.print(arr[i][j]);
-            }
-            System.out.println();
-        }
-    }
+
     public static boolean testArr(String[][] expected, String[][] actual) {
         if (expected.length != actual.length) {
             return false;
